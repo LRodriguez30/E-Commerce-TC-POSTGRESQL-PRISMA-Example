@@ -1,7 +1,5 @@
 // pages/api/users.js
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma"; // <- usar instancia global
 
 export default async function handler(req, res) {
   try {
@@ -90,7 +88,5 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     return res.status(500).json({ error: err.message });
-  } finally {
-    await prisma.$disconnect();
   }
 }
