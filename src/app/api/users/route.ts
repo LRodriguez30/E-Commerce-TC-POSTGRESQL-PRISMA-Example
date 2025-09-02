@@ -1,5 +1,5 @@
 // src/app/api/users/route.ts
-import prisma from "@/lib/prisma";
+import prisma from "@/src/lib/prisma";
 
 // Helper para verificar API Key
 function checkApiKey(token: string | null, secret?: string) {
