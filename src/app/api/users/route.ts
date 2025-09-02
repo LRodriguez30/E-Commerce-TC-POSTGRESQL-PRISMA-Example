@@ -1,90 +1,85 @@
-// pages/api/users.ts
-import type { NextApiRequest, NextApiResponse } from "next";
+// src/app/api/users/route.ts
 import prisma from "@/lib/prisma";
 
-type Data = 
-  | { error: string }
-  | any; // aquí puedes reemplazar 'any' por un tipo de usuario más adelante
+// Helper para verificar API Key
+function checkApiKey(token: string | null, secret?: string) {
+  if (!secret) return { valid: false, error: "API_KEY no definida" };
+  if (!token) return { valid: false, error: "Falta x-api-key" };
+  if (token !== secret) return { valid: false, error: "Token inválido" };
+  return { valid: true };
+}
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
-  try {
-    const token = req.headers["x-api-key"];
-    const SECRET_KEY = process.env.API_KEY;
-
-    if (!SECRET_KEY) {
-      return res.status(500).json({ error: "Error de configuración: API_KEY no definida" });
-    }
-
-    if (!token) {
-      return res.status(401).json({ error: "No autorizado: falta x-api-key" });
-    }
-
-    if (token !== SECRET_KEY) {
-      return res.status(401).json({ error: "No autorizado: token inválido" });
-    }
-
-    switch (req.method) {
-      case "GET":
-        try {
-          const users = await prisma.testing.findMany();
-          return res.status(200).json(users);
-        } catch (err: any) {
-          return res.status(500).json({ error: err.message });
-        }
-
-      case "POST":
-        try {
-          const { name, email } = req.body as { name?: string; email?: string };
-          if (!name || !email) {
-            return res.status(400).json({ error: "Faltan campos obligatorios (name, email)" });
-          }
-
-          const newUser = await prisma.testing.create({
-            data: { Nombre: name, Correo: email },
-          });
-
-          return res.status(201).json(newUser);
-        } catch (err: any) {
-          return res.status(400).json({ error: err.message });
-        }
-
-      case "PUT":
-        try {
-          const { id, name, email } = req.body as { id?: number; name?: string; email?: string };
-          if (!id) return res.status(400).json({ error: "Falta id" });
-
-          const updatedUser = await prisma.testing.update({
-            where: { id: Number(id) },
-            data: { Nombre: name, Correo: email },
-          });
-
-          return res.status(200).json(updatedUser);
-        } catch (err: any) {
-          return res.status(400).json({ error: err.message });
-        }
-
-      case "DELETE":
-        try {
-          const { id } = req.body as { id?: number };
-          if (!id) return res.status(400).json({ error: "Falta id" });
-
-          const deletedUser = await prisma.testing.delete({
-            where: { id: Number(id) },
-          });
-
-          return res.status(200).json(deletedUser);
-        } catch (err: any) {
-          return res.status(400).json({ error: err.message });
-        }
-
-      default:
-        res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
-        return res.status(405).end(`Method ${req.method} Not Allowed`);
-    }
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+// GET /api/users
+export async function GET(req: Request) {
+  const token = req.headers.get("x-api-key");
+  const check = checkApiKey(token, process.env.API_KEY);
+  if (!check.valid) {
+    return new Response(JSON.stringify({ error: check.error }), { status: 401 });
   }
+
+  const users = await prisma.testing.findMany();
+  return new Response(JSON.stringify(users), { status: 200 });
+}
+
+// POST /api/users
+export async function POST(req: Request) {
+  const token = req.headers.get("x-api-key");
+  const check = checkApiKey(token, process.env.API_KEY);
+  if (!check.valid) {
+    return new Response(JSON.stringify({ error: check.error }), { status: 401 });
+  }
+
+  const body = await req.json();
+  const { name, email } = body;
+
+  if (!name || !email) {
+    return new Response(JSON.stringify({ error: "Faltan campos (name, email)" }), { status: 400 });
+  }
+
+  const newUser = await prisma.testing.create({
+    data: { Nombre: name, Correo: email },
+  });
+
+  return new Response(JSON.stringify(newUser), { status: 201 });
+}
+
+// PUT /api/users
+export async function PUT(req: Request) {
+  const token = req.headers.get("x-api-key");
+  const check = checkApiKey(token, process.env.API_KEY);
+  if (!check.valid) {
+    return new Response(JSON.stringify({ error: check.error }), { status: 401 });
+  }
+
+  const body = await req.json();
+  const { id, name, email } = body;
+
+  if (!id) return new Response(JSON.stringify({ error: "Falta id" }), { status: 400 });
+
+  const updatedUser = await prisma.testing.update({
+    where: { id: Number(id) },
+    data: { Nombre: name, Correo: email },
+  });
+
+  return new Response(JSON.stringify(updatedUser), { status: 200 });
+}
+
+// DELETE /api/users
+export async function DELETE(req: Request) {
+  const token = req.headers.get("x-api-key");
+  const check = checkApiKey(token, process.env.API_KEY);
+  if (!check.valid) {
+    return new Response(JSON.stringify({ error: check.error }), { status: 401 });
+  }
+
+  const body = await req.json();
+  const { id } = body;
+
+  if (!id) return new Response(JSON.stringify({ error: "Falta id" }), { status: 400 });
+
+  const deletedUser = await prisma.testing.delete({
+    where: { id: Number(id) },
+  });
+
+  return new Response(JSON.stringify(deletedUser), { status: 200 });
 }
