@@ -1,5 +1,5 @@
 // src/lib/prisma.js
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@/generated/prisma";
 
 declare global {
   // Agregamos la propiedad 'prisma' al objeto global
