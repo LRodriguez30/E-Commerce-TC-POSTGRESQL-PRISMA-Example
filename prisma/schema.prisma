@@ -1,0 +1,16 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql" // o "mysql", depende de tu DB
+  url      = env("DATABASE_URL")
+}
+
+model Testing {
+  id     Int     @id @default(autoincrement())
+  Nombre String?
+  Correo String?
+}
